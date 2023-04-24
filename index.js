@@ -80,6 +80,18 @@ app.post("/api/shorturl", async (req, res) => {
   }
 });
 
+app.get("/api/shorturl/:short_url", (req, res) => {
+  URL_STR.findOne({
+    short_url: req.params.short_url,
+  })
+    .then((data) => {
+      return res.redirect(data.original_url);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
 app.listen(port, function () {
   console.log(`Listening on port ${port}`);
 });
