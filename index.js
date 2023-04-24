@@ -5,6 +5,7 @@ const app = express();
 const mongoose = require("mongoose");
 const shortId = require("shortid");
 const validurl = require("valid-url");
+const morgan = require("morgan");
 
 // Connect to database
 const uri = process.env.MONGO_URI;
@@ -34,6 +35,7 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(morgan("tiny"));
 
 app.use("/public", express.static(`${process.cwd()}/public`));
 
@@ -48,6 +50,7 @@ app.get("/api/hello", function (req, res) {
 
 app.post("/api/shorturl", async (req, res) => {
   const url = req.body.url_input;
+  console.log(url);
   const urlCode = shortId.generate();
 
   if (!validurl.isWebUri(url)) {
