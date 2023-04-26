@@ -50,7 +50,7 @@ app.get("/api/hello", function (req, res) {
 
 app.post("/api/shorturl", async (req, res) => {
   const url = req.body.url_input;
-  console.log(url);
+  console.log(req.body);
   const urlCode = shortId.generate();
 
   if (!validurl.isWebUri(url)) {
@@ -58,9 +58,10 @@ app.post("/api/shorturl", async (req, res) => {
       error: "invalid URL",
     });
   } else {
-    const findUrl = URL_STR.findOne({
+    const findUrl = await URL_STR.findOne({
       original_url: url,
     });
+
     if (findUrl) {
       res.json({
         original_url: findUrl.original_url,
@@ -72,13 +73,17 @@ app.post("/api/shorturl", async (req, res) => {
         short_url: urlCode,
       });
 
-      newEntry.save((err, result) => {
-        if (err) {
-          res.status(500).json({ error: err });
-        } else {
-          res.json(result);
-        }
-      });
+      const entry = await newEntry.save();
+      console.log(entry);
+
+      if (!entry) {
+        res.status(500).json({ error: "data not saved" });
+      } else {
+        res.json({
+          original_url: entry.original_url,
+          short_url: entry.short_url,
+        });
+      }
     }
   }
 });
