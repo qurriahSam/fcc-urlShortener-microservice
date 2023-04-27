@@ -49,7 +49,7 @@ app.get("/api/hello", function (req, res) {
 });
 
 app.post("/api/shorturl", async (req, res) => {
-  const url = req.body.url_input;
+  const url = req.body.url;
   console.log(req.body);
   const urlCode = shortId.generate();
 
