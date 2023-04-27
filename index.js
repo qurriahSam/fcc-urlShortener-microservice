@@ -59,7 +59,7 @@ app.post("/api/shorturl", (req, res) => {
   dns.lookup(urlparser.parse(url).hostname, async (err, address) => {
     if (!address) {
       res.status(401).json({
-        error: "invalid URL",
+        error: "invalid url",
       });
     } else {
       const findUrl = await URL_STR.findOne({
