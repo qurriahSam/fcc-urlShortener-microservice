@@ -9,7 +9,7 @@ const morgan = require("morgan");
 
 // Connect to database
 const uri = process.env.MONGO_URI;
-mongoose.connect(`${uri}`, {
+mongoose.connect(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 5000,
