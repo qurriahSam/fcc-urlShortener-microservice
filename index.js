@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
 const shortId = require("shortid");
 const validurl = require("valid-url");
 const morgan = require("morgan");
@@ -34,7 +35,7 @@ const URL_STR = mongoose.model("URL_STR", urlSchema);
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(morgan("tiny"));
 
 app.use("/public", express.static(`${process.cwd()}/public`));
