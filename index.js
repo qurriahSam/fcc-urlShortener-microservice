@@ -4,6 +4,8 @@ const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const urlparser = require("url");
+const dns = require("dns");
 const shortId = require("shortid");
 const validurl = require("valid-url");
 const morgan = require("morgan");
@@ -49,44 +51,46 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.post("/api/shorturl", async (req, res) => {
+app.post("/api/shorturl", (req, res) => {
   const url = req.body.url;
   console.log(req.body);
   const urlCode = shortId.generate();
 
-  if (!validurl.isWebUri(url)) {
-    res.status(401).json({
-      error: "invalid URL",
-    });
-  } else {
-    const findUrl = await URL_STR.findOne({
-      original_url: url,
-    });
-
-    if (findUrl) {
-      res.json({
-        original_url: findUrl.original_url,
-        short_url: findUrl.short_url,
+  dns.lookup(urlparser.parse(url).hostname, async (err, address) => {
+    if (!address) {
+      res.status(401).json({
+        error: "invalid URL",
       });
     } else {
-      const newEntry = new URL_STR({
+      const findUrl = await URL_STR.findOne({
         original_url: url,
-        short_url: urlCode,
       });
 
-      const entry = await newEntry.save();
-      console.log(entry);
-
-      if (!entry) {
-        res.status(500).json({ error: "data not saved" });
-      } else {
+      if (findUrl) {
         res.json({
-          original_url: entry.original_url,
-          short_url: entry.short_url,
+          original_url: findUrl.original_url,
+          short_url: findUrl.short_url,
         });
+      } else {
+        const newEntry = new URL_STR({
+          original_url: url,
+          short_url: urlCode,
+        });
+
+        const entry = await newEntry.save();
+        console.log(entry);
+
+        if (!entry) {
+          res.status(500).json({ error: "data not saved" });
+        } else {
+          res.json({
+            original_url: entry.original_url,
+            short_url: entry.short_url,
+          });
+        }
       }
     }
-  }
+  });
 });
 
 app.get("/api/shorturl/:short_url", (req, res) => {
