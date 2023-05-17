@@ -4,12 +4,11 @@ const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const urlparser = require("url");
+const { URL } = require("url");
 const dns = require("dns");
 const shortId = require("shortid");
-const validUrl = require("valid-url");
+//const validurl = require("valid-url");
 const morgan = require("morgan");
-const lookup = require("dns-lookup");
 
 // Connect to database
 const uri = process.env.MONGO_URI;
@@ -52,55 +51,60 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.post("/api/shorturl", async (req, res) => {
+app.post("/api/shorturl", (req, res) => {
   const url = req.body.url;
-  //console.log(req.body);
-  console.log({ parsedurl: urlparser.parse(url).hostname, url: url });
-
+  console.log(req.body);
   const urlCode = shortId.generate();
 
-  const urlCheck = validUrl.isUri(url);
-
-  if (url.startsWith("http")) {
-    res.json({
-      error: "invalid url",
+  let newURL;
+  try {
+    newURL = new URL(url);
+  } catch (error) {
+    return res.json({
+      error: "invalid URL",
     });
-    return;
   }
 
-  if (!urlCheck) {
-    res.status(401).json({
-      error: "invalid url",
-    });
-  } else {
-    const findUrl = await URL_STR.findOne({
-      original_url: url,
-    });
+  if (newURL.protocol != "https:") {
+    return res.json({ error: "invalid URL" });
+  }
 
-    if (findUrl) {
-      res.json({
-        original_url: findUrl.original_url,
-        short_url: findUrl.short_url,
+  dns.lookup(newURL.hostname, async (err, address) => {
+    console.log(address);
+    if (err) {
+      res.status(401).json({
+        error: "invalid url",
       });
     } else {
-      const newEntry = new URL_STR({
+      const findUrl = await URL_STR.findOne({
         original_url: url,
-        short_url: urlCode,
       });
 
-      const entry = await newEntry.save();
-      console.log(entry);
-
-      if (!entry) {
-        res.status(500).json({ error: "data not saved" });
-      } else {
+      if (findUrl) {
         res.json({
-          original_url: entry.original_url,
-          short_url: entry.short_url,
+          original_url: findUrl.original_url,
+          short_url: findUrl.short_url,
         });
+      } else {
+        const newEntry = new URL_STR({
+          original_url: url,
+          short_url: urlCode,
+        });
+
+        const entry = await newEntry.save();
+        console.log(entry);
+
+        if (!entry) {
+          res.status(500).json({ error: "data not saved" });
+        } else {
+          res.json({
+            original_url: entry.original_url,
+            short_url: entry.short_url,
+          });
+        }
       }
     }
-  }
+  });
 });
 
 app.get("/api/shorturl/:short_url", (req, res) => {
